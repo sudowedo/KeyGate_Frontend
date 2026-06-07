@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import '../styles/DemoPage.css';
+import { IconCopy, IconCheck } from '../parts/Icons';
 import { FALLBACK_PROVIDERS, parseAllowedModels, providerDefaultModel, providerLabel, providerModels } from '../../lib/providers';
 
 export default function DemoPage({ ctx }) {
@@ -29,6 +30,7 @@ export default function DemoPage({ ctx }) {
   }, [allowedModelList, model, selectedSubkey, providerOptions]);
 
   const preview = !selectedSubkey ? 'Select a subkey to see the request preview...' : `POST /v1/chat/completions\nAuthorization: Bearer ${tokenPreview || 'sk-kg-••••'}\n\n{\n  "model": "${model}",\n  "messages": [{\n    "role": "user",\n    "content": "${prompt}"\n  }]\n}`;
+  const [copiedSnippet, setCopiedSnippet] = useState('');
   const add = (line) => setConsoleLines((v) => [...v, line]);
 
   const curlSnippet = `TOKEN="sk-kg-YourTokenHere"\ncurl https://keygate-backend.onrender.com/v1/chat/completions \\\n  -H "Authorization: Bearer $TOKEN" \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"${model}","messages":[{"role":"user","content":"${prompt}"}]}'`;
@@ -52,7 +54,7 @@ export default function DemoPage({ ctx }) {
     } catch (e) { add(`✗ connection error: ${e.message}`); }
   };
 
-  const snippetCard = (title, code) => <div className='card' onClick={() => copyText(code)} style={{ cursor: 'pointer' }}><div className='card-title'>{title}</div><pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'DM Mono, monospace', fontSize: '12px', marginTop: '8px' }}>{code}</pre></div>;
+  const snippetCard = (title, code) => <div className='card copy-btn' onClick={() => { navigator.clipboard.writeText(code); setCopiedSnippet(title); setTimeout(() => setCopiedSnippet(''), 1600); }} style={{ cursor: 'pointer' }}><div className='card-title' style={{display:'flex',alignItems:'center',gap:8}}>{title}{copiedSnippet === title ? <><IconCheck width={14} height={14} style={{color:'var(--green)'}} /> <span style={{fontSize:11,color:'var(--green)',fontWeight:500}}>Copied!</span></> : <IconCopy width={14} height={14} style={{color:'var(--muted)'}} />}</div><pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'DM Mono, monospace', fontSize: '12px', marginTop: '8px' }}>{code}</pre>{copiedSnippet === title && <span className='copy-flash'>Copied!</span>}</div>;
 
   return <div className='page active demo-page'><div style={{ padding: '32px 36px' }}><div className='page-header'><div className='page-title'>Live demo</div><div className='page-sub'>See exactly how a client uses a subkey — without ever knowing the real key</div></div>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import useConsoleRouteState from './hooks/useConsoleRouteState';
 import Sidebar from './components/parts/Sidebar';
 import ConsoleHeader from './components/parts/ConsoleHeader';
@@ -12,10 +12,12 @@ import NotificationsPage from './components/pages/NotificationsPage';
 
 const API = import.meta.env.VITE_API_URL || 'https://keygate-backend.onrender.com';
 const fmtNum = (n) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n || 0));
-const fmtTime = (ts) => (!ts ? '—' : new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+const fmtTime = (ts) => (!ts ? '\u2014' : new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 const fmtDate = (ts) => (!ts ? 'Never' : new Date(ts * 1000).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }));
 const quotaColor = (used, limit) => (((used / limit) * 100 > 90) ? 'over' : ((used / limit) * 100 > 70) ? 'warn' : 'ok');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const VALID_PAGES = ['overview', 'masterkeys', 'subkeys', 'logs', 'demo', 'health', 'notifications'];
 
 export default function App() {
   const { page, view, projectSlug, go, isPublicHealth } = useConsoleRouteState();
@@ -28,15 +30,24 @@ export default function App() {
   const [subkeys, setSubkeys] = useState([]);
   const [masterKeys, setMasterKeys] = useState([]);
   const [logs, setLogs] = useState([]);
-  const [analytics, setAnalytics] = useState({ totalRequests: 0, totalTokens: 0, avgLatency: '—', logs: [] });
+  const [analytics, setAnalytics] = useState({ totalRequests: 0, totalTokens: 0, avgLatency: '\u2014', logs: [] });
   const [notif, setNotif] = useState({ show: false, msg: '', type: 'success' });
   const [modal, setModal] = useState('');
-  const [revealedToken, setRevealedToken] = useState('—');
+  const [revealedToken, setRevealedToken] = useState('\u2014');
   const [providers, setProviders] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState({ overview: true, masterkeys: true, subkeys: true, logs: true });
+  const [copiedItem, setCopiedItem] = useState('');
 
   const notify = (msg, type = 'success') => { setNotif({ show: true, msg, type }); setTimeout(() => setNotif((v) => ({ ...v, show: false })), 3000); };
-  const copyText = (text) => navigator.clipboard.writeText(text).then(() => notify('Copied to clipboard'));
+
+  const copyText = useCallback(async (text, id = '') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (id) { setCopiedItem(id); setTimeout(() => setCopiedItem((v) => v === id ? '' : v), 1600); }
+      else notify('Copied to clipboard');
+    } catch { notify('Failed to copy', 'error'); }
+  }, [notify]);
 
   const api = async (path, opts = {}) => {
     const hasBody = opts.body !== undefined;
@@ -62,10 +73,26 @@ export default function App() {
     setProjects(rows);
     return rows;
   };
-  const loadOverview = async () => { const [sks, an] = await Promise.all([api('/api/subkeys'), api('/api/analytics')]); setSubkeys(sks); setLogs(an.logs || []); setAnalytics(an); };
-  const loadMasterKeys = async () => setMasterKeys(await api('/api/master-keys'));
-  const loadSubkeys = async () => setSubkeys(await api('/api/subkeys'));
-  const loadLogs = async () => { const an = await api('/api/analytics'); setLogs(an.logs || []); setAnalytics(an); };
+  const loadOverview = async () => {
+    setLoading((v) => ({ ...v, overview: true }));
+    try { const [sks, an] = await Promise.all([api('/api/subkeys'), api('/api/analytics')]); setSubkeys(sks); setLogs(an.logs || []); setAnalytics(an); }
+    finally { setLoading((v) => ({ ...v, overview: false })); }
+  };
+  const loadMasterKeys = async () => {
+    setLoading((v) => ({ ...v, masterkeys: true }));
+    try { setMasterKeys(await api('/api/master-keys')); }
+    finally { setLoading((v) => ({ ...v, masterkeys: false })); }
+  };
+  const loadSubkeys = async () => {
+    setLoading((v) => ({ ...v, subkeys: true }));
+    try { setSubkeys(await api('/api/subkeys')); }
+    finally { setLoading((v) => ({ ...v, subkeys: false })); }
+  };
+  const loadLogs = async () => {
+    setLoading((v) => ({ ...v, logs: true }));
+    try { const an = await api('/api/analytics'); setLogs(an.logs || []); setAnalytics(an); }
+    finally { setLoading((v) => ({ ...v, logs: false })); }
+  };
 
   useEffect(() => {
     if (isPublicHealth) return;
@@ -91,12 +118,49 @@ export default function App() {
     if (page === 'masterkeys') loadMasterKeys().catch((e) => notify(e.message, 'error'));
     if (page === 'subkeys') loadSubkeys().catch((e) => notify(e.message, 'error'));
     if (page === 'logs') loadLogs().catch((e) => notify(e.message, 'error'));
-    if (page === 'demo' || page === 'notifications') loadSubkeys().catch((e) => notify(e.message, 'error'));
+    if (page === 'demo' || page === 'notifications') { loadSubkeys().catch((e) => notify(e.message, 'error')); setLoading((v) => ({ ...v, subkeys: true })); }
   }, [page, projectSlug]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      const target = e.target;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable;
+      if (e.key === 'Escape') {
+        if (modal) setModal('');
+        if (projectToDelete) setProjectToDelete(null);
+        return;
+      }
+      if (!isInput && (e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const search = document.querySelector('.projects-search, .console-search-input');
+        if (search) { search.focus(); return; }
+        notify('No search field available');
+        return;
+      }
+      if (!isInput && !e.metaKey && !e.ctrlKey && ['1','2','3','4','5'].includes(e.key) && view === 'console') {
+        e.preventDefault();
+        const idx = parseInt(e.key) - 1;
+        const keys = ['overview', 'masterkeys', 'subkeys', 'logs', 'demo'];
+        if (keys[idx] && keys[idx] !== page) navigate(keys[idx]);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [modal, projectToDelete, page, view]);
+
+  // Reset subkey loading when data arrives for demo/notifications
+  useEffect(() => {
+    if (page === 'demo' || page === 'notifications') {
+      if (subkeys.length > 0) setLoading((v) => ({ ...v, subkeys: false }));
+    }
+  }, [subkeys, page]);
 
   const navigate = async (p) => go(`/console/${projectSlug}/${p}`);
 
-  const ctx = useMemo(() => ({ API, providers, loadProviders, fmtNum, fmtTime, fmtDate, quotaColor, sleep, api, notify, copyText, modal, setModal, revealedToken, setRevealedToken, loadMasterKeys, loadSubkeys, loadLogs, loadOverview, subkeys, setSubkeys, masterKeys, logs, analytics, page }), [modal, subkeys, masterKeys, logs, analytics, revealedToken, page, projectSlug, providers]);
+  const ctx = useMemo(() => ({ API, providers, loadProviders, fmtNum, fmtTime, fmtDate, quotaColor, sleep, api, notify, copyText, modal, setModal, revealedToken, setRevealedToken, loadMasterKeys, loadSubkeys, loadLogs, loadOverview, subkeys, setSubkeys, masterKeys, logs, analytics, page, loading, copiedItem }), [modal, subkeys, masterKeys, logs, analytics, revealedToken, page, projectSlug, providers, loading, copiedItem]);
+
+  const is404 = view === 'console' && page && !VALID_PAGES.includes(page);
 
   const createProject = async () => {
     if (projects.length >= 3) return notify('Maximum 3 projects allowed for now', 'error');
@@ -121,14 +185,9 @@ export default function App() {
       ];
       let deleted = false;
       for (const attempt of attempts) {
-        const res = await fetch(API + attempt.path, {
-          method: attempt.method,
-        });
+        const res = await fetch(API + attempt.path, { method: attempt.method });
         const data = await res.json().catch(() => ({}));
-        if (res.ok && (data?.success !== false)) {
-          deleted = true;
-          break;
-        }
+        if (res.ok && (data?.success !== false)) { deleted = true; break; }
       }
       if (!deleted) throw new Error('Failed to delete project');
       setDeleteConfirm('');
@@ -144,6 +203,26 @@ export default function App() {
   if (isPublicHealth) {
     const publicCtx = { ...ctx, api: (path, opts = {}) => api(path, { ...opts, headers: {} }) };
     return <HealthPage ctx={publicCtx} publicMode />;
+  }
+
+  if (is404) {
+    return <div className='page active not-found-page'>
+      <div className='not-found-content'>
+        <div className='not-found-icon'>
+          <svg width="80" height="80" viewBox="0 0 28 28" fill="none">
+            <path d="M14 2L4 6.5v6c0 6.5 4 12 10 13.5 6-1.5 10-7 10-13.5v-6L14 2Z" fill="url(#nf-grad)" opacity=".3"/>
+            <path d="M14 2L4 6.5v6c0 6.5 4 12 10 13.5 6-1.5 10-7 10-13.5v-6L14 2Z" stroke="url(#nf-grad)" strokeWidth="1" strokeDasharray="3 3" opacity=".5"/>
+            <defs><linearGradient id="nf-grad" x1="4" y1="2" x2="24" y2="28"><stop stopColor="#7c6bff"/><stop offset="1" stopColor="#a594ff"/></linearGradient></defs>
+          </svg>
+        </div>
+        <h1 className='not-found-title'>404 — Page not found</h1>
+        <p className='not-found-sub'>"{page}" doesn't exist in this console.</p>
+        <div className='not-found-actions'>
+          <button className='btn btn-primary' onClick={() => navigate('overview')}>Go to Overview</button>
+          <button className='btn btn-ghost' onClick={() => go('/console')}>All projects</button>
+        </div>
+      </div>
+    </div>;
   }
 
   if (view === 'create') {
