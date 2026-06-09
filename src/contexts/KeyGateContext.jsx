@@ -94,6 +94,8 @@ export default function KeyGateProvider({ children, projectSlug, page }) {
   };
 
   const loadOverview = async () => {
+    cacheBust('/api/subkeys');
+    cacheBust('/api/analytics');
     setLoading((v) => ({ ...v, overview: true }));
     try {
       const [sks, an] = await Promise.all([api('/api/subkeys'), api('/api/analytics')]);
@@ -106,18 +108,21 @@ export default function KeyGateProvider({ children, projectSlug, page }) {
   };
 
   const loadMasterKeys = async () => {
+    cacheBust('/api/master-keys');
     setLoading((v) => ({ ...v, masterkeys: true }));
     try { setMasterKeys(await api('/api/master-keys')); }
     finally { setLoading((v) => ({ ...v, masterkeys: false })); }
   };
 
   const loadSubkeys = async () => {
+    cacheBust('/api/subkeys');
     setLoading((v) => ({ ...v, subkeys: true }));
     try { setSubkeys(await api('/api/subkeys')); }
     finally { setLoading((v) => ({ ...v, subkeys: false })); }
   };
 
   const loadLogs = async () => {
+    cacheBust('/api/analytics');
     setLoading((v) => ({ ...v, logs: true }));
     try {
       const an = await api('/api/analytics');
@@ -175,6 +180,21 @@ export default function KeyGateProvider({ children, projectSlug, page }) {
       if (subkeys.length > 0) setLoading((v) => ({ ...v, subkeys: false }));
     }
   }, [subkeys, page]);
+
+  // Auto-refresh on tab focus — catches external API requests
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!projectSlug) return;
+      if (page === 'overview') loadOverview().catch(() => {});
+      else if (page === 'masterkeys') loadMasterKeys().catch(() => {});
+      else if (page === 'subkeys') loadSubkeys().catch(() => {});
+      else if (page === 'logs') loadLogs().catch(() => {});
+      else if (page === 'demo' || page === 'notifications') loadSubkeys().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [page, projectSlug]);
 
   const ctx = useMemo(() => ({
     API, providers, loadProviders, fmtNum, fmtTime, fmtDate, quotaColor, sleep,

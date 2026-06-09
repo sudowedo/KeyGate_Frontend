@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import '../styles/DemoPage.css';
 import { IconCopy, IconCheck } from '../parts/Icons';
 import { FALLBACK_PROVIDERS, parseAllowedModels, providerDefaultModel, providerLabel, providerModels } from '../../lib/providers';
+import { cacheBust } from '../../lib/cache';
 
 export default function DemoPage({ ctx }) {
   const { subkeys, API, api, notify, sleep, copyText, providers = FALLBACK_PROVIDERS } = ctx;
@@ -51,6 +52,7 @@ export default function DemoPage({ ctx }) {
       const data = await res.json();
       if (!res.ok) { add(`✗ error ${res.status}: ${data.error?.message || 'unknown error'}`); return; }
       add(`✓ response received`); add(`→ tokens used: ${data.usage?.total_tokens || 0}`); add('AI response:'); add(data.choices?.[0]?.message?.content || ''); notify('Request proxied — check logs for usage');
+      cacheBust('/api/analytics'); cacheBust('/api/subkeys'); cacheBust('/api/master-keys');
     } catch (e) { add(`✗ connection error: ${e.message}`); }
   };
 
