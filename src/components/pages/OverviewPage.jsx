@@ -10,7 +10,7 @@ export default function OverviewPage({ ctx, navigate }) {
   const failed = logs.filter((l) => l.status !== 'success').length;
   const costUsed = analytics.costAttribution?.reduce((s, r) => s + (r.est_cost_usd || 0), 0) || 0;
   const todayBySubkey = logs.reduce((acc, l) => {
-    acc[l.subkey_name || '\u2014'] = (acc[l.subkey_name || '\u2014'] || 0) + (l.tokens_used || 0);
+    acc[l.subkey_name || '—'] = (acc[l.subkey_name || '—'] || 0) + (l.tokens_used || 0);
     return acc;
   }, {});
   const topUser = Object.entries(todayBySubkey).sort((a, b) => b[1] - a[1])[0];
@@ -28,41 +28,41 @@ export default function OverviewPage({ ctx, navigate }) {
       {isLoading ? <>
         <SkelStat /><SkelStat /><SkelStat /><SkelStat />
       </> : <>
-        <div className='stat'><div className='stat-val'>{fmtNum(analytics.totalRequests)}</div><div className='stat-label'>Requests</div><div className='stat-trend'>{reqTrend >= 0 ? `\u2191${Math.abs(reqTrend)}%` : `\u2193${Math.abs(reqTrend)}%`}</div></div>
-        <div className='stat'><div className='stat-val'>{fmtNum(failed)}</div><div className='stat-label'>Failed</div><div className='stat-trend'>{failTrend >= 0 ? `\u2191${Math.abs(failTrend)}%` : `\u2193${Math.abs(failTrend)}%`}</div></div>
+        <div className='stat'><div className='stat-val'>{fmtNum(analytics.totalRequests)}</div><div className='stat-label'>Requests</div><div className='stat-trend'>{reqTrend >= 0 ? `↑${Math.abs(reqTrend)}%` : `↓${Math.abs(reqTrend)}%`}</div></div>
+        <div className='stat'><div className='stat-val'>{fmtNum(failed)}</div><div className='stat-label'>Failed</div><div className='stat-trend'>{failTrend >= 0 ? `↑${Math.abs(failTrend)}%` : `↓${Math.abs(failTrend)}%`}</div></div>
         <div className='stat'><div className='stat-val'>${costUsed.toFixed(2)}</div><div className='stat-label'>Cost</div></div>
-        <div className='stat'><div className='stat-val'>{analytics.avgLatency || '\u2014'}</div><div className='stat-label'>Latency</div></div>
+        <div className='stat'><div className='stat-val'>{analytics.avgLatency || '—'}</div><div className='stat-label'>Latency</div></div>
       </>}
     </div>
 
-    <div className='card health-card'><div className='card-header'><div><div className='card-title'>Health & abuse detection</div><div className='card-sub'>Fast signal check before deep analytics</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('logs')}>Inspect logs \u2192</button></div>
+    <div className='card health-card'><div className='card-header'><div><div className='card-title'>Health & abuse detection</div><div className='card-sub'>Fast signal check before deep analytics</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('logs')}>Inspect logs →</button></div>
       {isLoading ? <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}><SkelMiniCard /><SkelMiniCard /></div>
         : <div className='mobile-stack-grid' style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div className='card' style={{ margin: 0, padding: '14px' }}><div className='card-sub'>Top user</div><div className='mono' style={{ fontSize: '13px', marginTop: '4px' }}>{topUser ? `${topUser[0]} \u2014 ${fmtNum(topUser[1])} tokens` : '\u2014'}</div></div>
-          <div className='card' style={{ margin: 0, padding: '14px' }}><div className='card-sub'>Abuse detection</div><div style={{ marginTop: '4px', fontSize: '12px' }}>{failed > analytics.totalRequests * 0.35 ? '\u26a0 High error ratio detected' : '\u2705 No suspicious activity'}</div></div>
+          <div className='card' style={{ margin: 0, padding: '14px' }}><div className='card-sub'>Top user</div><div className='mono' style={{ fontSize: '13px', marginTop: '4px' }}>{topUser ? `${topUser[0]} — ${fmtNum(topUser[1])} tokens` : '—'}</div></div>
+          <div className='card' style={{ margin: 0, padding: '14px' }}><div className='card-sub'>Abuse detection</div><div style={{ marginTop: '4px', fontSize: '12px' }}>{failed > analytics.totalRequests * 0.35 ? '⚠ High error ratio detected' : '✅ No suspicious activity'}</div></div>
         </div>}
     </div>
 
     <div className='card graph-card'><div className='card-header'><div><div className='card-title'>Usage graph</div><div className='card-sub'>Proxy requests trend</div></div><div className='timeframe'><button className='btn btn-ghost btn-sm'>24H</button><button className='btn btn-ghost btn-sm'>7D</button><button className='btn btn-ghost btn-sm'>30D</button></div></div>
-      {isLoading ? <SkelGraph /> : <div className='graph-frame' style={{ display: 'flex', alignItems: 'end', gap: '4px', height: '70px' }}>{logs.slice(0, 30).reverse().map((l, i) => <div key={i} title={`${l.subkey_name || '\u2014'} | ${l.model || '\u2014'} | ${fmtNum(l.tokens_used)} tokens | ${l.status}`} style={{ width: '8px', height: `${Math.max(8, Math.min(64, (l.tokens_used || 1) / 20))}px`, background: 'var(--accent)', opacity: .8, borderRadius: '2px' }} />)}</div>}
+      {isLoading ? <SkelGraph /> : <div className='graph-frame' style={{ display: 'flex', alignItems: 'end', gap: '4px', height: '70px' }}>{logs.slice(0, 30).reverse().map((l, i) => <div key={i} title={`${l.subkey_name || '—'} | ${l.model || '—'} | ${fmtNum(l.tokens_used)} tokens | ${l.status}`} style={{ width: '8px', height: `${Math.max(8, Math.min(64, (l.tokens_used || 1) / 20))}px`, background: 'var(--accent)', opacity: .8, borderRadius: '2px' }} />)}</div>}
     </div>
 
-    <div className='card'><div className='card-header'><div><div className='card-title'>Recent activity</div><div className='card-sub'>Latest proxy events</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('logs')}>Open logs \u2192</button></div>
+    <div className='card'><div className='card-header'><div><div className='card-title'>Recent activity</div><div className='card-sub'>Latest proxy events</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('logs')}>Open logs →</button></div>
       {isLoading ? Array.from({length:4}).map((_,i) => <SkelRow key={i} />)
-        : !recentActivity.length ? <div className='empty'><div className='empty-text'>No activity yet</div></div> : recentActivity.map((l, i) => <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', padding: '9px 0', borderBottom: '1px solid var(--border)' }}><span>{l.subkey_name || 'Unknown subkey'} \u2014 {l.status}</span><span className='mono'>{fmtTime(l.created_at)}</span></div>)}
+        : !recentActivity.length ? <div className='empty'><div className='empty-text'>No activity yet</div></div> : recentActivity.map((l, i) => <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', padding: '9px 0', borderBottom: '1px solid var(--border)' }}><span>{l.subkey_name || 'Unknown subkey'} — {l.status}</span><span className='mono'>{fmtTime(l.created_at)}</span></div>)}
     </div>
 
-    <div className='card'><div className='card-header'><div><div className='card-title'>Subkey analytics</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('subkeys')}>Manage keys \u2192</button></div>
+    <div className='card'><div className='card-header'><div><div className='card-title'>Subkey analytics</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('subkeys')}>Manage keys →</button></div>
       {isLoading ? Array.from({length:5}).map((_,i) => <SkelRow key={i} />)
         : Object.entries(todayBySubkey).length ? Object.entries(todayBySubkey).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, tokens]) => <div key={name} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}><span>{name}</span><span className='mono'>{fmtNum(tokens)} tokens today</span></div>) : <div className='empty'><div className='empty-text'>No subkey usage yet</div></div>}
     </div>
 
-    <div className='card'><div className='card-header'><div><div className='card-title'>Subkey usage snapshot</div><div className='card-sub'>Quota consumption across all active keys</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('subkeys')}>Manage \u2192</button></div>
+    <div className='card'><div className='card-header'><div><div className='card-title'>Subkey usage snapshot</div><div className='card-sub'>Quota consumption across all active keys</div></div><button className='btn btn-ghost btn-sm' onClick={() => navigate('subkeys')}>Manage →</button></div>
       {isLoading ? Array.from({length:3}).map((_,i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}><div style={{flex:1}}><div className='skel skel-block skel-h skel-w40' style={{marginBottom:6}} /><div className='skel skel-block skel-bar' /><div className='skel skel-block skel-h skel-w60' style={{marginTop:6}} /></div></div>)
-        : !subkeys.length ? <div className='empty'><div className='empty-text'>No subkeys yet \u2014 <button className='btn btn-ghost btn-sm' onClick={() => navigate('subkeys')}>create one</button></div></div> : subkeys.slice(0, 5).map((sk) => {
+        : !subkeys.length ? <div className='empty'><div className='empty-text'>No subkeys yet — <button className='btn btn-ghost btn-sm' onClick={() => navigate('subkeys')}>create one</button></div></div> : subkeys.slice(0, 5).map((sk) => {
           const pct = Math.min(100, Math.round((sk.tokens_used / sk.monthly_token_limit) * 100));
           const col = quotaColor(sk.tokens_used, sk.monthly_token_limit);
-          return <div key={sk.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '2px' }}>{sk.name}</div><div className='quota-bar'><div className={`quota-fill ${col}`} style={{ width: `${pct}%` }} /></div><div className='quota-text'>{fmtNum(sk.tokens_used)} / {fmtNum(sk.monthly_token_limit)} tokens \u2014 {pct}%</div></div><span className={`badge ${sk.status}`}>{sk.status}</span></div>;
+          return <div key={sk.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '2px' }}>{sk.name}</div><div className='quota-bar'><div className={`quota-fill ${col}`} style={{ width: `${pct}%` }} /></div><div className='quota-text'>{fmtNum(sk.tokens_used)} / {fmtNum(sk.monthly_token_limit)} tokens — {pct}%</div></div><span className={`badge ${sk.status}`}>{sk.status}</span></div>;
         })}
     </div>
   </div></div>;
