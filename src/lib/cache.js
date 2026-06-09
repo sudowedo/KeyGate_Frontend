@@ -77,3 +77,10 @@ export function cacheClearAll() {
     // silently skip
   }
 }
+
+// ── Console helpers: callable from browser dev tools ──
+if (typeof window !== 'undefined') {
+  window.cacheClearAll = cacheClearAll;
+  window.cacheBust = cacheBust;
+  window.cacheGet = cacheGet;
+}
