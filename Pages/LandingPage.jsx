@@ -3,11 +3,9 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
-  Shield,
   Sparkles,
   Star,
   Lock,
-  Github,
   Zap,
   Globe,
 } from './icons';
@@ -22,6 +20,7 @@ import {
   FAQS,
 } from './marketingContent';
 
+const LANDING_SECTION_CLASS = 'border-y border-slate-200 bg-gradient-to-b from-white to-slate-50';
 
 export default function LandingPage() {
   const go = (path) => { window.history.pushState({}, '', path); window.dispatchEvent(new Event('popstate')); };
@@ -82,7 +81,7 @@ function Hero({ go }) {
                 onClick={() => go('/console')}
                 className="group inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow-lg"
               >
-                Launch console
+                Get started
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </button>
               <button
@@ -120,55 +119,12 @@ function HeroCard() {
     <div className="relative">
       <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-200/40 blur-2xl" />
       <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-emerald-200/40 blur-2xl" />
-      <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-300/30">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-              <Shield className="h-4 w-4" strokeWidth={2.5} />
-            </div>
-            <span className="text-sm font-semibold text-slate-900">Live governance</span>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Healthy
-          </span>
-        </div>
-        <div className="mt-4 space-y-3">
-          {[
-            ['k_live_openai_•••• 9f3a', 'Production', '3.2M / 5M tokens', 64],
-            ['k_live_anthropic_•••• 1c2b', 'Forge AI', '1.1M / 2M tokens', 55],
-            ['k_live_vertex_•••• 7e44', 'Neura Health', '0.4M / 1M tokens', 40],
-            ['k_live_mistral_•••• 02dd', 'Demo (vendor)', '12k / 50k tokens', 24],
-          ].map(([name, project, usage, pct], i) => (
-            <div key={i} className="rounded-lg border border-slate-100 bg-slate-50/50 p-3">
-              <div className="flex items-center justify-between">
-                <code className="text-[11px] text-slate-700">{name}</code>
-                <span className="text-[11px] font-medium text-slate-500">{project}</span>
-              </div>
-              <div className="mt-2 flex items-center gap-3">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
-                  <div
-                    className="h-full rounded-full bg-slate-900 transition-all duration-700"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <span className="text-[11px] tabular-nums text-slate-600">{usage}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
-          {[
-            ['1,247', 'requests today'],
-            ['4.7M', 'tokens today'],
-            ['42ms', 'p50 latency'],
-          ].map(([val, label]) => (
-            <div key={label}>
-              <div className="text-lg font-semibold text-slate-900">{val}</div>
-              <div className="text-[11px] text-slate-500">{label}</div>
-            </div>
-          ))}
-        </div>
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-300/30">
+        <img
+          src="/og-image.png"
+          alt="KeyGate product preview"
+          className="h-auto w-full object-cover"
+        />
       </div>
     </div>
   );
@@ -176,7 +132,7 @@ function HeroCard() {
 
 function Logos() {
   return (
-    <section className="border-y border-slate-200 bg-white py-8">
+    <section className={`${LANDING_SECTION_CLASS} py-8`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <p className="mb-6 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
           Works with your existing providers
@@ -197,7 +153,7 @@ function Logos() {
 
 function MetricsBar() {
   return (
-    <section className="border-b border-slate-200 bg-slate-50 py-12">
+    <section className={`${LANDING_SECTION_CLASS} py-12`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
           {METRICS.map((m) => (
@@ -226,7 +182,7 @@ function SectionHeader({ eyebrow, title, subtitle }) {
 
 function Features() {
   return (
-    <section id="features" className="bg-white py-20 sm:py-28">
+    <section id="features" className={`${LANDING_SECTION_CLASS} py-20 sm:py-28`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Capabilities"
@@ -257,7 +213,7 @@ function Features() {
 
 function HowItWorks() {
   return (
-    <section className="bg-slate-50 py-20 sm:py-28">
+    <section className={`${LANDING_SECTION_CLASS} py-20 sm:py-28`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="How it works"
@@ -311,7 +267,7 @@ function Pricing({ go }) {
   };
 
   return (
-    <section id="pricing" className="bg-white py-20 sm:py-28">
+    <section id="pricing" className={`${LANDING_SECTION_CLASS} py-20 sm:py-28`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Pricing"
@@ -386,7 +342,7 @@ function Pricing({ go }) {
 
 function Testimonials() {
   return (
-    <section className="border-y border-slate-200 bg-slate-50 py-20 sm:py-28">
+    <section className={`${LANDING_SECTION_CLASS} py-20 sm:py-28`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader eyebrow="Customers" title="Teams ship API access with confidence" />
         <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -426,7 +382,7 @@ function Testimonials() {
 function Faq() {
   const [open, setOpen] = useState(0);
   return (
-    <section id="faq" className="bg-white py-20 sm:py-28">
+    <section id="faq" className={`${LANDING_SECTION_CLASS} py-20 sm:py-28`}>
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <SectionHeader eyebrow="FAQ" title="Frequently asked questions" />
         <div className="mt-12 divide-y divide-slate-200 rounded-xl border border-slate-200">
@@ -474,7 +430,7 @@ function Faq() {
 
 function CtaBand({ go }) {
   return (
-    <section className="bg-slate-50 py-16">
+    <section className={`${LANDING_SECTION_CLASS} py-16`}>
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-slate-900 px-8 py-12 text-center shadow-xl sm:px-16 sm:py-16">
           <div
@@ -501,7 +457,7 @@ function CtaBand({ go }) {
                 onClick={() => go('/console')}
                 className="group inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-medium text-slate-900 transition-all hover:bg-slate-100"
               >
-                Launch console
+                Get started
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </button>
               <button
@@ -517,9 +473,6 @@ function CtaBand({ go }) {
               </span>
               <span className="flex items-center gap-1.5">
                 <Globe className="h-3.5 w-3.5" /> International payments via Razorpay
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Github className="h-3.5 w-3.5" /> Open about how it works
               </span>
             </div>
           </div>
